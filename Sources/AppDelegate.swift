@@ -19,8 +19,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     NSWorkspace.shared
       .publisher(for: \.frontmostApplication)
       .compactMap { $0 }
-      .sink { runningApplication in
-        guard Dock.missionControlIsActive else { return }
+      .sink { [weak self] runningApplication in
+        guard let self = self, Dock.missionControlIsActive else { return }
         let applicationName: String = runningApplication.localizedName ?? ""
 
         if Dock.windowCount(for: applicationName) > 0 {
@@ -28,6 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             runningApplication.activate(options: .activateIgnoringOtherApps)
           }
         }
+        self.globalWindowCount = Dock.windowCount()
       }.store(in: &subscriptions)
 
     addGlobalTimer()
