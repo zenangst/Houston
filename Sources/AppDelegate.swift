@@ -2,61 +2,61 @@ import Combine
 import Cocoa
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+  private var counter: Int = 0
+  private var globalWindowCount = Dock.windowCount()
+  private var runningApplicationSubscription: AnyCancellable?
   private var runningApplicationWindows = 0
   private var subscriptions = [AnyCancellable]()
-  private var runningApplicationSubscription: AnyCancellable?
-  private var counter: Int = 0
-  private var timer: Timer?
+  private var globalTimer: Timer? {
+    willSet { globalTimer?.invalidate() }
+  }
+  private var frontmostApplicationTimer: Timer? {
+    willSet { frontmostApplicationTimer?.invalidate() }
+  }
 
   func applicationDidFinishLaunching(_ notification: Notification) {
+    NSApplication.shared.setActivationPolicy(.accessory)
     NSWorkspace.shared
       .publisher(for: \.frontmostApplication)
       .compactMap { $0 }
-      .sink { [weak self] runningApplication in
-        guard let self = self, Dock.missionControlIsActive else { return }
+      .sink { runningApplication in
+        guard Dock.missionControlIsActive else { return }
         let applicationName: String = runningApplication.localizedName ?? ""
-        self.runningApplicationWindows = Dock.windowCount(for: applicationName)
-        self.counter = 10
 
-        if self.runningApplicationWindows > 0 {
+        if Dock.windowCount(for: applicationName) > 0 {
           Dock.openMissionControl {
             runningApplication.activate(options: .activateIgnoringOtherApps)
           }
-        } else {
-          if !runningApplication.isFinishedLaunching {
-            self.runningApplicationSubscription = runningApplication
-              .publisher(for: \.isFinishedLaunching)
-              .sink { value in
-                self.poll(applicationName)
-                self.runningApplicationSubscription = nil
-              }
-          } else {
-            self.poll(applicationName)
-          }
         }
       }.store(in: &subscriptions)
+
+    addGlobalTimer()
   }
 
-  func poll(_ applicationName: String) {
-    let timer = Timer(timeInterval: 0.375, repeats: true) { timer in
-      defer {
-        self.counter -= 1
-        if self.counter <= 0 {
-          timer.invalidate()
-        }
-      }
-      let openWindows = Dock.windowCount(for: applicationName)
-      if self.runningApplicationWindows != openWindows {
-        Dock.openMissionControl {
-          let deadline = DispatchTime.now() + NSAnimationContext.current.duration + 0.035
-          DispatchQueue.main.asyncAfter(deadline: deadline) { Dock.openMissionControl() }
-        }
-        self.runningApplicationWindows = openWindows
-        timer.invalidate()
-        self.counter = 0
-      }
+  private func addGlobalTimer() {
+    let globalTimer = Timer(timeInterval: 0.5,
+                            repeats: true,
+                            block: runGlobalTimer(_:))
+    self.globalTimer = globalTimer
+    RunLoop.current.add(globalTimer, forMode: .default)
+  }
+
+  private func runGlobalTimer(_ timer: Timer) {
+    guard Dock.missionControlIsActive else { return }
+
+    let newWindowCount = Dock.windowCount()
+    if newWindowCount > globalWindowCount {
+      realignMissionControl()
+      globalWindowCount = newWindowCount
+    } else if newWindowCount != globalWindowCount {
+      globalWindowCount = newWindowCount
     }
-    RunLoop.main.add(timer, forMode: .default)
-    self.timer = timer
+  }
+
+  private func realignMissionControl() {
+    Dock.openMissionControl {
+      let deadline = DispatchTime.now() + NSAnimationContext.current.duration + 0.035
+      DispatchQueue.main.asyncAfter(deadline: deadline) { Dock.openMissionControl() }
+    }
   }
 }
