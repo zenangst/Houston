@@ -1,0 +1,13 @@
+tmp
+.DS_Store
+Houston.xcodeproj/project.*
+Houston.xcodeproj/xcshareddata/xcschemes/*
+Houston.xcodeproj/xcuserdata/*
+Release/*.zip
+Release/*.app
+Release/.*
+.env
+exportOptions.plist
+Build/*.xcarchive
+Build/Releases/*
+Generated/*
