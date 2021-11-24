@@ -21,7 +21,10 @@ final class TimerController {
 
     let windowCount = WindowManager.windowCount()
     if windowCount > session.windowCount {
-      MissionControl.realign()
+      self.timer = nil
+      MissionControl.realign {
+        self.addTimer()
+      }
     }
     session.windowCount = windowCount
   }
