@@ -17,7 +17,7 @@ final class WindowManager {
     !windowInfo.filter { entry in
       guard let appName = entry[kCGWindowOwnerName as String] as? String,
             let layer = entry[kCGWindowLayer as String] as? Int,
-            appName == "Dock" &&
+            appName == Dock.name &&
             layer == CGWindowLevelKey.desktopIconWindow.rawValue else {
         return false
       }
@@ -34,7 +34,7 @@ final class WindowManager {
       guard let bounds = entry[kCGWindowBounds] as? NSDictionary,
             let appName = entry[kCGWindowOwnerName] as? String,
             let layer = entry[kCGWindowLayer] as? Int32,
-            appName != "Dock" else {
+            appName != Dock.name else {
         return false
       }
 

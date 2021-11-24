@@ -41,12 +41,12 @@ if [[ "$OUTPUT" =~ $TICKET_PATTERN ]]; then
         break
       else
         echo "🚦 Current status: $STATUS"
-        sleep 30
+        sleep 10
       fi
     else
       echo "🚶‍♂️ Status: in progress"
       echo $OUTPUT
-      sleep 30
+      sleep 10
     fi
     done
 else

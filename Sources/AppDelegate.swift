@@ -8,7 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApplication.shared.setActivationPolicy(.accessory)
-    timerController.addTimer()
+    timerController.addGlobalTimer()
     frontmostController.subscribe(to: NSWorkspace.shared.publisher(for: \.frontmostApplication))
   }
 }
