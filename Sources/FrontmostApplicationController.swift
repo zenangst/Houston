@@ -14,7 +14,11 @@ final class FrontmostApplicationController {
     self.subscription = publisher
       .compactMap { $0 }
       .sink { [weak self] runningApplication in
-        guard let self = self, WindowManager.missionControlIsActive else { return }
+        guard let self = self else { return }
+        self.session.windowCount = WindowManager.windowCount()
+
+        guard WindowManager.missionControlIsActive else { return }
+
         let applicationName: String = runningApplication.localizedName ?? ""
 
         if WindowManager.windowCount(applicationNamed: applicationName) > 0 {
@@ -22,7 +26,6 @@ final class FrontmostApplicationController {
             runningApplication.activate(options: .activateIgnoringOtherApps)
           }
         }
-        self.session.windowCount = WindowManager.windowCount()
       }
   }
 }
